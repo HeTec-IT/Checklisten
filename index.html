@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Shop-Checkliste</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --magenta: #E20074;
+    --magenta-dark: #B8005D;
+    --magenta-light: #FF4DA6;
+    --bg: #F5F5F7;
+    --card: #FFFFFF;
+    --text: #1D1D1F;
+    --text-sec: #6E6E73;
+    --border: #D2D2D7;
+    --green: #34C759;
+    --orange: #FF9500;
+    --blue: #007AFF;
+    --radius: 14px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--magenta) 0%, var(--magenta-dark) 100%);
+    color: #fff;
+    padding: 20px 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(226,0,116,0.3);
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+  .header-date {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .header-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .header select {
+    flex: 1;
+    min-width: 140px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.95);
+    color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236E6E73' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .tab-bar {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 96px;
+    z-index: 99;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sec);
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .tab.active {
+    color: var(--magenta);
+    border-bottom-color: var(--magenta);
+  }
+  .tab .badge {
+    display: inline-block;
+    background: var(--magenta);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .tab .badge.complete {
+    background: var(--green);
+  }
+  .checklist-container {
+    padding: 12px;
+  }
+  .info-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: var(--card);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-sec);
+    border: 1px solid var(--border);
+  }
+  .info-bar .icon { font-size: 18px; }
+  .info-bar strong { color: var(--text); }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--magenta);
+    padding: 16px 4px 8px;
+  }
+  .check-group {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item.checked { background: #F0FFF4; }
+  .check-item .checkbox {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    border-radius: 8px;
+    border: 2.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+  .check-item.checked .checkbox {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-item.skipped .checkbox {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
+  .check-item.skipped .checkbox svg { opacity: 0; }
+  .check-item.skipped .checkbox::after {
+    content: '—';
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .check-item .checkbox svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .check-item.checked .checkbox svg { opacity: 1; }
+  .check-item .content { flex: 1; }
+  .check-item .label {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+  }
+  .check-item.checked .label {
+    color: var(--text-sec);
+    text-decoration: line-through;
+    text-decoration-color: var(--green);
+  }
+  .check-item.skipped .label {
+    color: var(--text-sec);
+    text-decoration: line-through;
+    text-decoration-color: var(--orange);
+  }
+  .check-item.skipped { background: #FFF8F0; }
+  .skip-btn {
+    font-size: 11px;
+    color: var(--orange);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-block;
+    margin-left: 12px;
+    padding: 2px 8px;
+    border: 1.5px solid var(--orange);
+    border-radius: 6px;
+    background: transparent;
+    transition: all 0.15s;
+    vertical-align: middle;
+  }
+  .skip-btn:active {
+    background: var(--orange);
+    color: #fff;
+  }
+  .check-item.skipped .skip-btn {
+    background: var(--orange);
+    color: #fff;
+  }
+  .check-item.checked .skip-btn { display: none; }
+  .check-item .sublabel {
+    font-size: 12px;
+    color: var(--text-sec);
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+  .check-item .note-toggle {
+    font-size: 12px;
+    color: var(--blue);
+    font-weight: 600;
+    margin-top: 6px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  .check-item .note-area {
+    display: none;
+    margin-top: 8px;
+  }
+  .check-item .note-area.open { display: block; }
+  .check-item .note-area textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 50px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .check-item .note-area textarea:focus {
+    border-color: var(--magenta);
+  }
+
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.25);
+    border-radius: 6px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: #fff;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  .footer-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--magenta);
+    color: #fff;
+  }
+  .btn-primary:active { background: var(--magenta-dark); }
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:active { background: var(--border); }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  .modal h3 { font-size: 20px; margin-bottom: 8px; }
+  .modal p { font-size: 14px; color: var(--text-sec); margin-bottom: 20px; line-height: 1.45; }
+  .modal .btn { margin-top: 8px; }
+
+  .employee-field {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.95);
+    color: var(--text);
+    width: 100%;
+    min-width: 140px;
+  }
+  .employee-field:focus { outline: 2px solid rgba(255,255,255,0.5); }
+
+  @media (min-width: 600px) {
+    .checklist-container { max-width: 600px; margin: 0 auto; }
+    .footer-actions { max-width: 600px; margin: 0 auto; left: 50%; transform: translateX(-50%); }
+  }
+
+  .toggle-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+  .toggle-label {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .toggle-buttons {
+    display: flex;
+    gap: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+  }
+  .toggle-btn {
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text-sec);
+    transition: all 0.2s;
+  }
+  .toggle-btn.active[data-val="ja"] {
+    background: var(--magenta);
+    color: #fff;
+  }
+  .toggle-btn.active[data-val="nein"] {
+    background: var(--green);
+    color: #fff;
+  }
+  .check-group.auto-done {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .check-group.auto-done .check-item { background: #F0FFF4; }
+  .auto-done-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 600;
+    padding: 6px;
+    display: none;
+  }
+  .auto-done-hint.visible { display: block; }
+
+  .sig-modal { max-width: 500px; padding: 20px; }
+  .sig-canvas-wrap {
+    position: relative;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #FAFAFA;
+    margin: 8px 0 16px;
+    touch-action: none;
+  }
+  .sig-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    height: 150px;
+    cursor: crosshair;
+  }
+  .sig-line {
+    position: absolute;
+    bottom: 35px;
+    left: 20px;
+    right: 20px;
+    border-bottom: 1px dashed #ccc;
+    pointer-events: none;
+  }
+  .sig-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .sig-actions .btn { font-size: 13px; padding: 12px 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📋 Shop-Checkliste</h1>
+  <div class="header-date" id="headerDate"></div>
+  <div class="header-controls">
+    <select id="shopSelect">
+      <option value="Telekom Crailsheim">Telekom Crailsheim</option>
+      <option value="O2-Shop Crailsheim">O2-Shop Crailsheim</option>
+      <option value="O2-Shop Schwäbisch Hall">O2-Shop Schwäbisch Hall</option>
+      <option value="O2-Shop Aalen">O2-Shop Aalen</option>
+    </select>
+    <input type="text" id="employeeName" class="employee-field" placeholder="Bearbeitet von…" />
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+  </div>
+  <div class="progress-text" id="progressText">0 / 0 erledigt</div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" data-tab="daily" onclick="switchTab('daily')">
+    Täglich
+    <span class="badge" id="badgeDaily">0</span>
+  </div>
+  <div class="tab" data-tab="weekly" onclick="switchTab('weekly')">
+    Wöchentlich
+    <span class="badge" id="badgeWeekly">0</span>
+  </div>
+  <div class="tab" data-tab="monthly" onclick="switchTab('monthly')">
+    Monatlich
+    <span class="badge" id="badgeMonthly">0</span>
+  </div>
+</div>
+
+<!-- TÄGLICH -->
+<div class="checklist-container" id="panel-daily">
+  <div class="info-bar">
+    <span class="icon">⏰</span>
+    <span>Abgabe bis <strong>15:00 Uhr</strong> täglich</span>
+  </div>
+
+  <div class="section-title">🏪 Shop</div>
+  <div class="check-group" id="group-shop"></div>
+
+  <div class="section-title">💰 Kasse</div>
+  <div class="check-group" id="group-kasse"></div>
+
+  <div class="section-title">🖥️ Warenwirtschaft & Systeme</div>
+  <div class="check-group" id="group-systeme"></div>
+
+  <div class="section-title">🔒 DSGVO & Datenschutz</div>
+  <div class="check-group" id="group-dsgvo"></div>
+
+  <div class="section-title">📊 Vertrieb</div>
+  <div class="check-group" id="group-vertrieb"></div>
+
+  <div class="section-title">👔 Arbeitskleidung</div>
+  <div class="check-group" id="group-kleidung"></div>
+</div>
+
+<!-- WÖCHENTLICH -->
+<div class="checklist-container" id="panel-weekly" style="display:none;">
+  <div class="info-bar">
+    <span class="icon">📅</span>
+    <span>Jeden <strong>Montag</strong> zu erledigen</span>
+  </div>
+
+  <div class="section-title">📦 Bestand & Lager</div>
+  <div class="check-group" id="group-bestand"></div>
+
+  <div class="section-title">📚 Training & Verwaltung</div>
+  <div class="check-group" id="group-training"></div>
+
+  <div class="section-title">📱 Geräte & Reparaturen</div>
+  <div class="toggle-question" id="repToggle">
+    <span class="toggle-label">🔧 Reparaturen vorhanden?</span>
+    <div class="toggle-buttons">
+      <button class="toggle-btn" data-val="ja" onclick="setRepToggle('ja')">Ja</button>
+      <button class="toggle-btn active" data-val="nein" onclick="setRepToggle('nein')">Nein</button>
+    </div>
+  </div>
+  <div class="check-group" id="group-reparatur"></div>
+  <div class="auto-done-hint visible" id="repHint">✅ Keine Reparaturen vorhanden – automatisch erledigt</div>
+
+  <div class="section-title">🏷️ Marketing & Werbung</div>
+  <div class="check-group" id="group-marketing"></div>
+
+  <div class="section-title">🧹 Ordnung & Ausstattung</div>
+  <div class="check-group" id="group-ordnung"></div>
+
+  <div class="section-title">💶 Provision & Bestellungen</div>
+  <div class="check-group" id="group-provision"></div>
+</div>
+
+<!-- MONATLICH -->
+<div class="checklist-container" id="panel-monthly" style="display:none;">
+  <div class="info-bar">
+    <span class="icon">📆</span>
+    <span>Einmal im <strong>Monat</strong> zu erledigen</span>
+  </div>
+
+  <div class="section-title">📦 Rücksendungen & Bestellungen</div>
+  <div class="check-group" id="group-monatlich"></div>
+</div>
+
+<div class="footer-actions">
+  <button class="btn btn-secondary" onclick="resetChecklist()">Zurücksetzen</button>
+  <button class="btn btn-primary" onclick="submitChecklist()">✅ Abschließen</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">Checkliste abgeschlossen</h3>
+    <p id="modalText"></p>
+    <button class="btn btn-primary" onclick="closeModal()" style="width:100%">OK</button>
+  </div>
+</div>
+
+<!-- Unterschrift Modal -->
+<div class="modal-overlay" id="sigModal">
+  <div class="modal sig-modal">
+    <h3>✍️ Digitale Unterschrift</h3>
+    <p>Bitte hier mit dem Finger unterschreiben:</p>
+    <div class="sig-canvas-wrap">
+      <canvas id="sigCanvas" width="600" height="200"></canvas>
+      <div class="sig-line"></div>
+    </div>
+    <div class="sig-actions">
+      <button class="btn btn-secondary" onclick="clearSignature()">🗑️ Löschen</button>
+      <button class="btn btn-secondary" onclick="closeSigModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="confirmSignature()">✅ Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CHECKLISTS = {
+  daily: {
+    shop: [
+      { label: "🗑️ Mülleimer leeren", sub: "" },
+      { label: "🥤 Gläser und Flaschen aufräumen und in die Küche bringen", sub: "" },
+      { label: "🧹 Vor dem Shop gefegt / Besen sauber gemacht", sub: "❄️ Winterdienst beachten: 1 Meter vom Shop ist zwingend sauber zu machen, ggf. mit Salz bestreuen" },
+      { label: "☕ Kaffeemaschine sauber machen und Wasser füllen, ggf. tauschen", sub: "" },
+      { label: "💡 Lampen funktionsfähig", sub: "" },
+      { label: "📧 E-Mails gelesen", sub: "" },
+      { label: "📺 Präsentationen angemacht", sub: "TV, Handy-Demo-Geräte etc." },
+      { label: "🪧 Neue Werbungen überprüfen / Planogramm", sub: "Wenn etwas von der Telekom gekommen ist, Planogramm abstimmen" },
+    ],
+    kasse: [
+      { label: "🧮 Kasse gezählt", sub: "" },
+      { label: "📝 Protokoll gesendet (morgens & abends)", sub: "" },
+      { label: "🏦 Über 1.000 € Geld zur Bank bringen / abschöpfen", sub: "" },
+    ],
+    systeme: [
+      { label: "📅 Kalender überprüfen", sub: "Wobis, Vedemophone, Telekom Outlook, eigenes Outlook" },
+      { label: "📱 Demo-Geräte einwandfrei", sub: "" },
+      { label: "📞 Shop-Handys einwandfrei", sub: "" },
+      { label: "🔋 Tablets aufgeladen, neueste Updates, sauber", sub: "" },
+    ],
+    dsgvo: [
+      { label: "🔐 Kundendaten unter Verschluss / im Tresor", sub: "" },
+      { label: "📂 Tageslager – Kundenunterlagen geleert", sub: "" },
+      { label: "🗄️ Schubladen aufgeräumt", sub: "" },
+    ],
+    vertrieb: [
+      { label: "🔄 VVL-Prozesse überprüfen", sub: "" },
+      { label: "📊 BKM-Kampagne – mind. 3 Kontakte pro Datensatz", sub: "" },
+    ],
+    kleidung: [
+      { label: "👔 Vollständig bekleidet, Telekom-konform", sub: "" },
+      { label: "🪪 Namensschild tragen", sub: "" },
+    ],
+  },
+  weekly: {
+    bestand: [
+      { label: "📦 Bestandskontrolle mit Meldung an Vorgesetzten", sub: "" },
+    ],
+    training: [
+      { label: "🎓 Training & Termine eingetragen bzw. wahrgenommen", sub: "Telekom Akademie" },
+      { label: "📁 Bearbeitungsordner kontrolliert", sub: "" },
+      { label: "📰 Newsletterordner gelesen und ggf. unterschrieben", sub: "Aktionscockpit" },
+    ],
+    reparatur: [
+      { label: "🔧 Reparatur-Handys abgeschickt", sub: "" },
+      { label: "📲 Kunden informiert (Anruf, SMS)", sub: "" },
+      { label: "📤 Rücksendungen Handys erledigen", sub: "" },
+    ],
+    marketing: [
+      { label: "🏷️ Marketingplan überprüfen", sub: "Preise, Preisschilder, Etiketten aktuell, Ware richtig positioniert (TKG-Checkliste)" },
+    ],
+    ordnung: [
+      { label: "📦 Lager und Keller aufräumen", sub: "" },
+      { label: "🖥️ Rechner entmüllen", sub: "Links unten bei Suche: %temp% eingeben, alles markieren und löschen" },
+      { label: "🛍️ Tüten ausreichend & Vertragsmatten vorhanden", sub: "" },
+    ],
+    provision: [
+      { label: "💶 Provisionskontrolle überprüft und bearbeitet", sub: "" },
+      { label: "🛒 Shop-Bestellungen erledigt", sub: "Prepaid-Karten, Zubehör, ggf. Kundenbestellungen auslösen" },
+    ],
+  },
+  monthly: {
+    monatlich: [
+      { label: "📦 Rücksendungen gesendet", sub: "RMA, DOA oder Reparaturen" },
+      { label: "🖨️ Office-Discount-Bestellungen erledigt", sub: "Papier, Tesa oder Ähnliches" },
+      { label: "📮 Verträge an Telekom gesendet / Archiv", sub: "" },
+    ],
+  }
+};
+
+let currentTab = 'daily';
+let state = {};
+let repairsAvailable = false;
+
+function setRepToggle(val) {
+  repairsAvailable = (val === 'ja');
+  // Update toggle buttons
+  document.querySelectorAll('#repToggle .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === val);
+  });
+  const group = document.getElementById('group-reparatur');
+  const hint = document.getElementById('repHint');
+  if (repairsAvailable) {
+    group.classList.remove('auto-done');
+    hint.classList.remove('visible');
+    // Uncheck all reparatur items so user can manually check
+    state.weekly.reparatur.forEach(s => s.checked = false);
+  } else {
+    group.classList.add('auto-done');
+    hint.classList.add('visible');
+    // Auto-check all reparatur items
+    state.weekly.reparatur.forEach(s => s.checked = true);
+  }
+  renderAll();
+  saveToStorage();
+}
+
+function initState() {
+  state = {};
+  for (const [tab, groups] of Object.entries(CHECKLISTS)) {
+    state[tab] = {};
+    for (const [group, items] of Object.entries(groups)) {
+      state[tab][group] = items.map(() => ({ checked: false, skipped: false, note: '' }));
+    }
+  }
+  // Default: no repairs, auto-check reparatur items
+  repairsAvailable = false;
+  state.weekly.reparatur.forEach(s => s.checked = true);
+}
+
+function renderItems(groupId, tabKey, groupKey) {
+  const container = document.getElementById('group-' + groupId);
+  container.innerHTML = '';
+  const items = CHECKLISTS[tabKey][groupKey];
+  const stateItems = state[tabKey][groupKey];
+
+  items.forEach((item, i) => {
+    const s = stateItems[i];
+    const cls = s.checked ? ' checked' : s.skipped ? ' skipped' : '';
+    const div = document.createElement('div');
+    div.className = 'check-item' + cls;
+    div.innerHTML = `
+      <div class="checkbox" onclick="toggleCheck('${tabKey}','${groupKey}',${i})">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="content">
+        <div class="label" onclick="toggleCheck('${tabKey}','${groupKey}',${i})">${item.label}
+          <button class="skip-btn" onclick="event.stopPropagation();toggleSkip('${tabKey}','${groupKey}',${i})">${s.skipped ? '↩ Zurück' : 'Nicht möglich'}</button>
+        </div>
+        ${item.sub ? `<div class="sublabel">${item.sub}</div>` : ''}
+        <div class="note-toggle" onclick="toggleNote(this)">📝 Anmerkung</div>
+        <div class="note-area${s.note ? ' open' : ''}">
+          <textarea placeholder="Anmerkung hier…" oninput="updateNote('${tabKey}','${groupKey}',${i},this.value)">${s.note}</textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function toggleCheck(tab, group, idx) {
+  const s = state[tab][group][idx];
+  if (s.skipped) return; // Can't check while skipped
+  s.checked = !s.checked;
+  renderAll();
+  saveToStorage();
+}
+
+function toggleSkip(tab, group, idx) {
+  const s = state[tab][group][idx];
+  s.skipped = !s.skipped;
+  if (s.skipped) s.checked = false; // Uncheck when skipping
+  renderAll();
+  saveToStorage();
+}
+
+function toggleNote(el) {
+  const area = el.nextElementSibling;
+  area.classList.toggle('open');
+  if (area.classList.contains('open')) {
+    area.querySelector('textarea').focus();
+  }
+}
+
+function updateNote(tab, group, idx, val) {
+  state[tab][group][idx].note = val;
+  saveToStorage();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('panel-daily').style.display = tab === 'daily' ? '' : 'none';
+  document.getElementById('panel-weekly').style.display = tab === 'weekly' ? '' : 'none';
+  document.getElementById('panel-monthly').style.display = tab === 'monthly' ? '' : 'none';
+  updateProgress();
+}
+
+function countChecked(tab) {
+  let done = 0, total = 0;
+  for (const items of Object.values(state[tab])) {
+    total += items.length;
+    done += items.filter(i => i.checked || i.skipped).length;
+  }
+  return { done, total };
+}
+
+function updateProgress() {
+  const { done, total } = countChecked(currentTab);
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total} erledigt (${pct}%)`;
+
+  ['daily', 'weekly', 'monthly'].forEach(tab => {
+    const c = countChecked(tab);
+    const badge = document.getElementById('badge' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    badge.textContent = c.done + '/' + c.total;
+    badge.className = 'badge' + (c.done === c.total && c.total > 0 ? ' complete' : '');
+  });
+}
+
+function renderAll() {
+  // Daily
+  const dailyMap = { shop: 'shop', kasse: 'kasse', systeme: 'systeme', dsgvo: 'dsgvo', vertrieb: 'vertrieb', kleidung: 'kleidung' };
+  for (const [groupKey, groupId] of Object.entries(dailyMap)) {
+    renderItems(groupId, 'daily', groupKey);
+  }
+  // Weekly
+  const weeklyMap = { bestand: 'bestand', training: 'training', reparatur: 'reparatur', marketing: 'marketing', ordnung: 'ordnung', provision: 'provision' };
+  for (const [groupKey, groupId] of Object.entries(weeklyMap)) {
+    renderItems(groupId, 'weekly', groupKey);
+  }
+  // Monthly
+  renderItems('monatlich', 'monthly', 'monatlich');
+
+  applyRepToggleUI();
+  updateProgress();
+}
+
+function saveToStorage() {
+  try {
+    const shop = document.getElementById('shopSelect').value;
+    const employee = document.getElementById('employeeName').value;
+    const data = { shop, employee, state, repairsAvailable, timestamp: new Date().toISOString() };
+    localStorage.setItem('shop_checklist_' + shop, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    const shop = document.getElementById('shopSelect').value;
+    const raw = localStorage.getItem('shop_checklist_' + shop);
+    if (raw) {
+      const data = JSON.parse(raw);
+      const saved = new Date(data.timestamp);
+      const now = new Date();
+      if (saved.toDateString() === now.toDateString()) {
+        state = data.state;
+        repairsAvailable = data.repairsAvailable || false;
+        document.getElementById('employeeName').value = data.employee || '';
+        // Validate: sync saved state with current CHECKLISTS structure
+        for (const [tab, groups] of Object.entries(CHECKLISTS)) {
+          if (!state[tab]) state[tab] = {};
+          for (const [group, items] of Object.entries(groups)) {
+            if (!state[tab][group]) {
+              state[tab][group] = items.map(() => ({ checked: false, skipped: false, note: '' }));
+            } else {
+              // Ensure correct number of items
+              while (state[tab][group].length < items.length) {
+                state[tab][group].push({ checked: false, skipped: false, note: '' });
+              }
+              state[tab][group] = state[tab][group].slice(0, items.length);
+            }
+          }
+        }
+      } else {
+        initState();
+      }
+    }
+  } catch(e) { initState(); }
+  applyRepToggleUI();
+}
+
+function applyRepToggleUI() {
+  document.querySelectorAll('#repToggle .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === (repairsAvailable ? 'ja' : 'nein'));
+  });
+  const group = document.getElementById('group-reparatur');
+  const hint = document.getElementById('repHint');
+  if (repairsAvailable) {
+    group.classList.remove('auto-done');
+    hint.classList.remove('visible');
+  } else {
+    group.classList.add('auto-done');
+    hint.classList.add('visible');
+  }
+}
+
+function resetChecklist() {
+  if (!confirm('Checkliste wirklich zurücksetzen? Alle Haken und Anmerkungen werden gelöscht.')) return;
+  initState();
+  renderAll();
+  saveToStorage();
+}
+
+// ===== SIGNATURE PAD =====
+var sigCanvas, sigCtx, sigDrawing = false, sigHasContent = false, sigDataURL = '';
+
+function initSignaturePad() {
+  sigCanvas = document.getElementById('sigCanvas');
+  sigCtx = sigCanvas.getContext('2d');
+
+  // Scale canvas for retina
+  var wrap = sigCanvas.parentElement;
+  var rect = wrap.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  sigCanvas.width = rect.width * dpr;
+  sigCanvas.height = 150 * dpr;
+  sigCanvas.style.width = rect.width + 'px';
+  sigCanvas.style.height = '150px';
+  sigCtx.scale(dpr, dpr);
+
+  sigCtx.strokeStyle = '#1D1D1F';
+  sigCtx.lineWidth = 2.5;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  // Touch events
+  sigCanvas.addEventListener('touchstart', sigStart, { passive: false });
+  sigCanvas.addEventListener('touchmove', sigMove, { passive: false });
+  sigCanvas.addEventListener('touchend', sigEnd);
+  // Mouse events
+  sigCanvas.addEventListener('mousedown', sigStart);
+  sigCanvas.addEventListener('mousemove', sigMove);
+  sigCanvas.addEventListener('mouseup', sigEnd);
+  sigCanvas.addEventListener('mouseleave', sigEnd);
+}
+
+function sigGetPos(e) {
+  var rect = sigCanvas.getBoundingClientRect();
+  if (e.touches && e.touches.length > 0) {
+    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  }
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function sigStart(e) {
+  e.preventDefault();
+  sigDrawing = true;
+  sigHasContent = true;
+  var pos = sigGetPos(e);
+  sigCtx.beginPath();
+  sigCtx.moveTo(pos.x, pos.y);
+}
+
+function sigMove(e) {
+  if (!sigDrawing) return;
+  e.preventDefault();
+  var pos = sigGetPos(e);
+  sigCtx.lineTo(pos.x, pos.y);
+  sigCtx.stroke();
+}
+
+function sigEnd(e) {
+  sigDrawing = false;
+}
+
+function clearSignature() {
+  var dpr = window.devicePixelRatio || 1;
+  sigCtx.clearRect(0, 0, sigCanvas.width / dpr, sigCanvas.height / dpr);
+  sigHasContent = false;
+}
+
+function openSigModal() {
+  document.getElementById('sigModal').classList.add('open');
+  setTimeout(function() { initSignaturePad(); clearSignature(); }, 100);
+}
+
+function closeSigModal() {
+  document.getElementById('sigModal').classList.remove('open');
+}
+
+function confirmSignature() {
+  if (!sigHasContent) {
+    alert('Bitte zuerst unterschreiben!');
+    return;
+  }
+  sigDataURL = sigCanvas.toDataURL('image/png');
+  closeSigModal();
+  generatePrintPage();
+}
+
+// ===== SUBMIT =====
+function submitChecklist() {
+  var shop = document.getElementById('shopSelect').value;
+  var employee = document.getElementById('employeeName').value.trim();
+
+  if (!employee) {
+    showModal('Name fehlt', 'Bitte trage deinen Namen unter "Bearbeitet von" ein.');
+    return;
+  }
+
+  var counts = countChecked(currentTab);
+  var done = counts.done;
+  var total = counts.total;
+
+  if (done < total) {
+    showModal('Noch nicht fertig', done + ' von ' + total + ' Aufgaben erledigt. Bitte alle Punkte abhaken oder "Nicht möglich" setzen.');
+    return;
+  }
+
+  // Open signature modal
+  openSigModal();
+}
+
+function generatePrintPage() {
+  var shop = document.getElementById('shopSelect').value;
+  var employee = document.getElementById('employeeName').value.trim();
+  var counts = countChecked(currentTab);
+  var done = counts.done;
+  var total = counts.total;
+  var tabLabelsDisplay = { daily: 'Tägliche', weekly: 'Wöchentliche', monthly: 'Monatliche' };
+  var now = new Date();
+  var timeStr = now.toLocaleString('de-DE');
+
+  var sectionNames = {
+    daily: { shop: '🏪 Shop', kasse: '💰 Kasse', systeme: '🖥️ Warenwirtschaft & Systeme', dsgvo: '🔒 DSGVO & Datenschutz', vertrieb: '📊 Vertrieb', kleidung: '👔 Arbeitskleidung' },
+    weekly: { bestand: '📦 Bestand & Lager', training: '📚 Training & Verwaltung', reparatur: '📱 Geräte & Reparaturen', marketing: '🏷️ Marketing & Werbung', ordnung: '🧹 Ordnung & Ausstattung', provision: '💶 Provision & Bestellungen' },
+    monthly: { monatlich: '📦 Rücksendungen & Bestellungen' }
+  };
+
+  var rows = '';
+  var groups = Object.entries(CHECKLISTS[currentTab]);
+  for (var g = 0; g < groups.length; g++) {
+    var group = groups[g][0];
+    var items = groups[g][1];
+    var stateItems = state[currentTab][group];
+    var secName = (sectionNames[currentTab] && sectionNames[currentTab][group]) || group;
+
+    rows += '<tr><td colspan="2" style="padding:12px 8px 4px;font-weight:700;font-size:14px;color:#E20074;border-bottom:2px solid #E20074;">' + secName + '</td></tr>';
+
+    for (var i = 0; i < items.length; i++) {
+      var s = stateItems[i];
+      var label = items[i].label;
+      var statusText;
+
+      if (s.skipped) {
+        statusText = '<span style="color:#FF9500;">⚠️ Nicht möglich</span>';
+      } else {
+        statusText = '<span style="color:#34C759;">✅ Erledigt</span>';
+      }
+
+      rows += '<tr style="border-bottom:1px solid #eee;">';
+      rows += '<td style="padding:8px;font-size:13px;">' + label + '</td>';
+      rows += '<td style="padding:8px;font-size:12px;text-align:right;white-space:nowrap;">' + statusText + '</td>';
+      rows += '</tr>';
+
+      if (s.note) {
+        rows += '<tr><td colspan="2" style="padding:2px 8px 8px 32px;font-size:11px;color:#888;">📝 ' + s.note + '</td></tr>';
+      }
+    }
+  }
+
+  var sigBlock = '';
+  if (sigDataURL) {
+    sigBlock = '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #ddd;">' +
+      '<p style="font-size:12px;color:#888;margin:0 0 6px;">Digitale Unterschrift:</p>' +
+      '<img src="' + sigDataURL + '" style="max-width:280px;height:auto;border-bottom:1px solid #333;padding-bottom:4px;" />' +
+      '<p style="font-size:11px;color:#666;margin:4px 0 0;">' + employee + '</p>' +
+      '</div>';
+  }
+
+  var printHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Checkliste ' + shop + '</title>' +
+    '<style>' +
+    'body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;margin:0;padding:0;color:#1D1D1F;}' +
+    '.header{background:linear-gradient(135deg,#E20074,#B8005D);color:#fff;padding:20px;margin-bottom:16px;}' +
+    '.header h1{font-size:20px;margin:0 0 4px;}' +
+    '.header p{font-size:12px;margin:2px 0;opacity:0.9;}' +
+    '.status-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#F0FFF4;border:1px solid #34C759;border-radius:8px;margin:0 16px 12px;font-size:13px;font-weight:600;color:#34C759;}' +
+    'table{width:100%;border-collapse:collapse;padding:0 8px;}' +
+    '.footer{padding:20px 16px;font-size:10px;color:#999;}' +
+    '@media print{.no-print{display:none!important;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}' +
+    '</style></head><body>' +
+    '<div class="header">' +
+    '<h1>📋 ' + tabLabelsDisplay[currentTab] + ' Checkliste</h1>' +
+    '<p><strong>Shop:</strong> ' + shop + '</p>' +
+    '<p><strong>Bearbeitet von:</strong> ' + employee + '</p>' +
+    '<p><strong>Datum:</strong> ' + timeStr + '</p>' +
+    '</div>' +
+    '<div class="status-bar">✅ ' + done + ' / ' + total + ' erledigt (100%)</div>' +
+    '<table>' + rows + '</table>' +
+    '<div class="footer">' + sigBlock +
+    '<p style="margin-top:16px;font-size:10px;color:#999;">Abgeschlossen am ' + timeStr + ' von ' + employee + '</p>' +
+    '</div>' +
+    '<div class="no-print" style="text-align:center;padding:20px;">' +
+    '<button onclick="window.print()" style="padding:14px 40px;font-size:16px;font-weight:600;background:#E20074;color:#fff;border:none;border-radius:12px;cursor:pointer;">📄 Als PDF teilen / drucken</button>' +
+    '</div>' +
+    '</body></html>';
+
+  var printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+  } else {
+    var blob = new Blob([printHTML], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+}
+
+function showModal(title, text) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').textContent = text;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// Shop change
+document.getElementById('shopSelect').addEventListener('change', function() {
+  initState();
+  renderAll();
+});
+
+// Init — IMMER frisch starten bei Seitenaufruf
+localStorage.clear();
+var today = new Date();
+var dayNames = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+var monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+document.getElementById('headerDate').textContent = dayNames[today.getDay()] + ', ' + today.getDate() + '. ' + monthNames[today.getMonth()] + ' ' + today.getFullYear();
+
+initState();
+renderAll();
+</script>
+
+</body>
+</html>
