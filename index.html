@@ -439,11 +439,84 @@
     display: flex;
     gap: 8px;
   }
-  .sig-actions .btn { font-size: 13px; padding: 12px 8px; }
+  .sig-actions .btn { font-size: 13px; padding: 12px 8px; }  .picker-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    background: linear-gradient(135deg, #2b2b35 0%, #16161d 100%);
+  }
+  .picker-title {
+    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .picker-sub {
+    color: rgba(255,255,255,0.6);
+    font-size: 15px;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    width: 100%;
+    max-width: 720px;
+  }
+  .picker-tile {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  .picker-tile:active { transform: scale(0.97); }
+  .picker-tile-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #fff;
+  }
+  .picker-tile-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+  }
+  .picker-tile-tag {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    color: #fff;
+  }
 </style>
 </head>
 <body>
 
+<div class="picker-screen" id="shopPicker">
+  <div class="picker-title">📋 Shop-Checkliste</div>
+  <div class="picker-sub">Bitte Shop auswählen</div>
+  <div class="picker-grid" id="pickerGrid"></div>
+</div>
+
+<div id="appMain" style="display:none;">
 <div class="header">
   <h1>📋 Shop-Checkliste</h1>
   <div class="header-date" id="headerDate"></div>
@@ -580,7 +653,8 @@
 </div>
 
 <script>
-const CHECKLISTS = {
+function buildChecklists(isO2) {
+  return {
   daily: {
     shop: [
       { label: "🗑️ Mülleimer leeren", sub: "" },
@@ -590,7 +664,8 @@ const CHECKLISTS = {
       { label: "💡 Lampen funktionsfähig", sub: "" },
       { label: "📧 E-Mails gelesen", sub: "" },
       { label: "📺 Präsentationen angemacht", sub: "TV, Handy-Demo-Geräte etc." },
-      { label: "🪧 Neue Werbungen überprüfen / Planogramm", sub: "Wenn etwas von der Telekom gekommen ist, Planogramm abstimmen" },
+      { label: "🪧 Neue Werbungen überprüfen / Planogramm", sub: isO2 ? "Wenn etwas von o2 gekommen ist, Planogramm abstimmen" : "Wenn etwas von der Telekom gekommen ist, Planogramm abstimmen" },
+      ...(isO2 ? [{ label: "🚰 Wasserspender o2-konform mit Wasser und Bechern befüllt", sub: "" }] : []),
     ],
     kasse: [
       { label: "🧮 Kasse gezählt", sub: "" },
@@ -598,7 +673,7 @@ const CHECKLISTS = {
       { label: "🏦 Über 1.000 € Geld zur Bank bringen / abschöpfen", sub: "" },
     ],
     systeme: [
-      { label: "📅 Kalender überprüfen", sub: "Wobis, Vedemophone, Telekom Outlook, eigenes Outlook" },
+      { label: "📅 Kalender überprüfen", sub: isO2 ? "Wobis, Vedemophone, o2 Outlook, eigenes Outlook" : "Wobis, Vedemophone, Telekom Outlook, eigenes Outlook" },
       { label: "📱 Demo-Geräte einwandfrei", sub: "" },
       { label: "📞 Shop-Handys einwandfrei", sub: "" },
       { label: "🔋 Tablets aufgeladen, neueste Updates, sauber", sub: "" },
@@ -610,14 +685,45 @@ const CHECKLISTS = {
     ],
     vertrieb: [
       { label: "🔄 VVL-Prozesse überprüfen", sub: "" },
-      { label: "📊 BKM-Kampagne – mind. 3 Kontakte pro Datensatz", sub: "" },
+      isO2
+        ? { label: "📊 PartOs Kampagne", sub: "" }
+        : { label: "📊 BKM-Kampagne – mind. 3 Kontakte pro Datensatz", sub: "" },
     ],
     kleidung: [
-      { label: "👔 Vollständig bekleidet, Telekom-konform", sub: "" },
+      { label: isO2 ? "👔 Vollständig bekleidet, o2-konform" : "👔 Vollständig bekleidet, Telekom-konform", sub: "" },
       { label: "🪪 Namensschild tragen", sub: "" },
     ],
   },
-  weekly: {
+  weekly: isO2 ? {
+    bestand: [
+      { label: "📦 Hetec Eigenware: Liste aus Teams mit Bestand prüfen und an Bibi", sub: "" },
+      { label: "✅ Monatlicher Shopcheck – Mängel bearbeiten", sub: "" },
+      { label: "💳 Sim-Karten aus dem Lager ausbuchen", sub: "Sim-Karten, die vom Lager in den Shop mitgenommen werden, müssen ausgebucht werden" },
+    ],
+    training: [
+      { label: "📧 Wöchentliche Checkliste per E-Mail an Ivonne", sub: "" },
+      { label: "🖨️ Ausdruck MyHandy-Umsatzliste – Kontrolle und Ablage", sub: "Vergangene Woche rückwirkend, und per E-Mail an Ivonne" },
+      { label: "📱 Gerätezählung Handy/Zubehör an Ivonne", sub: "" },
+      { label: "🎓 Trainings/Termine eingetragen bzw. wahrgenommen", sub: "Teilnahmebestätigung an Ivonne schicken" },
+      { label: "📰 Newsletter Ordner gelesen und unterschrieben", sub: "" },
+    ],
+    reparatur: [
+      { label: "🔧 Reparatur Handys – Kunden informiert / angerufen / SMS versendet", sub: "" },
+      { label: "📤 Rückholaktion erledigt", sub: "" },
+      { label: "📸 In & Out Liste / Foto Upload / Flyer aktuell + gestempelt", sub: "" },
+    ],
+    marketing: [
+      { label: "🏷️ Preisetiketten und Planogramm prüfen und korrigieren", sub: "" },
+      { label: "📊 VVL-Kampagne aus PartOs überprüfen", sub: "Spätestens bis Mo an Ivonne per E-Mail: 1x abtelefoniert und mit Vedemo abgeglichen, Datensätze bearbeiten bis mind. 3 Kontakte eingetragen sind" },
+    ],
+    ordnung: [
+      { label: "🖨️ Papier / Toner / EC-Rollen lagernd", sub: "" },
+    ],
+    provision: [
+      { label: "📞 Noch offene Angebote/Pencil Selling ggf. nachtelefonieren", sub: "" },
+      { label: "📮 DSL, Mobilfunk, myHandy und Prepaid Archivierung senden an", sub: "<strong style='color:#FF3B30'>ACHTUNG NUR NACH CHECK VON FB / VERTRETUNG!!!!</strong><br>Regiocom SE<br>c.o. Telefonica<br>Document Management (Archivierung)<br>Marienstraße 4<br>39112 Magdeburg" },
+    ],
+  } : {
     bestand: [
       { label: "📦 Bestandskontrolle mit Meldung an Vorgesetzten", sub: "" },
     ],
@@ -645,13 +751,27 @@ const CHECKLISTS = {
     ],
   },
   monthly: {
-    monatlich: [
+    monatlich: isO2 ? [
+      { label: "🗄️ Archivierungsvorgaben prüfen", sub: "my Handy, Verkauf, Edel, RMA, Leihscheine Reparatur" },
+      { label: "🪧 Planogramm richtig?", sub: "" },
+      { label: "💡 Lichter funktionstüchtig?", sub: "" },
+      { label: "💳 Genügend Simkarten vorhanden?", sub: "" },
+      { label: "📋 Edelaufträge nacharbeiten", sub: "Ablehnungen raus, alle unterschrieben, alle abgeheftet" },
+      { label: "📦 Fremdware (Eigenware) monatlicher Check", sub: "" },
+      { label: "🧮 Mtl. Kassenzählung durch FB/FL", sub: "" },
+      { label: "🏪 O2 Shopcheck", sub: "" },
+      { label: "🗑️ Löschung von Kundendaten auf PCs gemäß Vorgaben", sub: "" },
+      { label: "🎓 Lernhistorie an Ivonne schicken", sub: "Bis spätestens 15. des Monats" },
+      { label: "✂️ Cuts aus Ape (GreenMnky) erfassen", sub: "" },
+    ] : [
       { label: "📦 Rücksendungen gesendet", sub: "RMA, DOA oder Reparaturen" },
       { label: "🖨️ Office-Discount-Bestellungen erledigt", sub: "Papier, Tesa oder Ähnliches" },
-      { label: "📮 Verträge an Telekom gesendet / Archiv", sub: "" },
+      { label: "📮 Verträge an " + (isO2 ? "o2" : "Telekom") + " gesendet / Archiv", sub: "" },
     ],
   }
-};
+  };
+}
+let CHECKLISTS = buildChecklists(false);
 
 let currentTab = 'daily';
 let state = {};
@@ -990,7 +1110,7 @@ function generatePrintPage() {
 
   var sectionNames = {
     daily: { shop: '🏪 Shop', kasse: '💰 Kasse', systeme: '🖥️ Warenwirtschaft & Systeme', dsgvo: '🔒 DSGVO & Datenschutz', vertrieb: '📊 Vertrieb', kleidung: '👔 Arbeitskleidung' },
-    weekly: { bestand: '📦 Bestand & Lager', training: '📚 Training & Verwaltung', reparatur: '📱 Geräte & Reparaturen', marketing: '🏷️ Marketing & Werbung', ordnung: '🧹 Ordnung & Ausstattung', provision: '💶 Provision & Bestellungen' },
+    weekly: { bestand: '📦 Bestand & Lager', training: '📚 Training & Verwaltung', reparatur: '📱 Geräte & Reparaturen', marketing: '🏷️ Marketing & Werbung', ordnung: '🧹 Ordnung & Ausstattung', provision: '💶 Provision & Bestellungen', kommunikation: '📧 Kommunikation & Meldungen', verkauf: '📞 Verkauf & Archivierung' },
     monthly: { monatlich: '📦 Rücksendungen & Bestellungen' }
   };
 
@@ -1084,11 +1204,55 @@ function closeModal() {
   document.getElementById('modal').classList.remove('open');
 }
 
+// Theme je nach Shop
+function applyTheme() {
+  var shop = document.getElementById('shopSelect').value;
+  var isO2 = shop.indexOf('O2') === 0;
+  CHECKLISTS = buildChecklists(isO2);
+  var root = document.documentElement.style;
+  if (isO2) {
+    root.setProperty('--magenta', '#0019A5');
+    root.setProperty('--magenta-dark', '#000E5C');
+    root.setProperty('--magenta-light', '#3D5AFE');
+  } else {
+    root.setProperty('--magenta', '#E20074');
+    root.setProperty('--magenta-dark', '#B8005D');
+    root.setProperty('--magenta-light', '#FF4DA6');
+  }
+}
+
 // Shop change
 document.getElementById('shopSelect').addEventListener('change', function() {
+  applyTheme();
   initState();
   renderAll();
 });
+
+// Kachel-Auswahl beim Start
+var SHOPS = [
+  { name: 'Telekom Crailsheim', tag: 'Telekom', color: '#E20074' },
+  { name: 'O2-Shop Crailsheim', tag: 'o2', color: '#0019A5' },
+  { name: 'O2-Shop Schwäbisch Hall', tag: 'o2', color: '#0019A5' },
+  { name: 'O2-Shop Aalen', tag: 'o2', color: '#0019A5' },
+];
+function renderPicker() {
+  var grid = document.getElementById('pickerGrid');
+  grid.innerHTML = SHOPS.map(function(s) {
+    return '<div class="picker-tile" onclick="selectShop(\'' + s.name.replace(/'/g, "\\'") + '\')">' +
+      '<div class="picker-tile-icon" style="background:' + s.color + '">🏪</div>' +
+      '<div class="picker-tile-name">' + s.name + '</div>' +
+      '<div class="picker-tile-tag" style="background:' + s.color + '">' + s.tag + '</div>' +
+    '</div>';
+  }).join('');
+}
+function selectShop(name) {
+  document.getElementById('shopSelect').value = name;
+  document.getElementById('shopPicker').style.display = 'none';
+  document.getElementById('appMain').style.display = 'block';
+  applyTheme();
+  initState();
+  renderAll();
+}
 
 // Init — IMMER frisch starten bei Seitenaufruf
 localStorage.clear();
@@ -1097,9 +1261,9 @@ var dayNames = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag',
 var monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 document.getElementById('headerDate').textContent = dayNames[today.getDay()] + ', ' + today.getDate() + '. ' + monthNames[today.getMonth()] + ' ' + today.getFullYear();
 
-initState();
-renderAll();
+renderPicker();
 </script>
 
+</div>
 </body>
 </html>
